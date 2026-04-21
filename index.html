@@ -145,11 +145,11 @@ html.light .theme-btn .icon-moon { display: inline-block; }
 body[dir="rtl"] .search-icon-wrap { left: auto; right: 10px; }
 .search-box input { height: 34px; width: 200px; padding: 0 10px 0 32px; }
 body[dir="rtl"] .search-box input { padding: 0 32px 0 10px; }
-.filter-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.filter-right { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
 body[dir="rtl"] .filter-right { margin-left: 0; margin-right: auto; }
 .showing-count { font-size: 12px; color: var(--t4); white-space: nowrap; }
-.vtoggle { display: flex; border: 1px solid var(--bd); border-radius: 5px; overflow: hidden; }
-.vtoggle button { background: transparent; border: none; padding: 5px 10px; cursor: pointer; color: var(--t3); transition: background 0.12s, color 0.12s; display: flex; align-items: center; gap: 5px; font-size: 12px; }
+.vtoggle { display: flex; border: 1px solid var(--bd); border-radius: 5px; overflow: hidden; flex-shrink: 0; }
+.vtoggle button { background: transparent; border: none; padding: 5px 10px; cursor: pointer; color: var(--t3); transition: background 0.12s, color 0.12s; display: flex; align-items: center; gap: 5px; font-size: 12px; white-space: nowrap; }
 .vtoggle button.active { background: var(--bd); color: var(--t1); }
 .vtoggle button:hover:not(.active) { background: var(--card-h); color: var(--t2); }
 
@@ -198,7 +198,7 @@ footer { background: var(--ftbg); border-top: 1px solid var(--bs); padding: 14px
 
 /* Side panel */
 .backdrop { position: fixed; inset: 0; background: var(--bdc); z-index: 200; opacity: 0; transition: opacity 0.22s; pointer-events: none; }
-.backdrop.open { opacity: 1; pointer-events: all; }
+.backdrop.open { opacity: 1; pointer-events: all; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
 .side-panel { position: fixed; top: 0; right: 0; height: 100vh; width: 400px; background: var(--pb); border-left: 1px solid var(--bs); z-index: 201; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.25s cubic-bezier(0.32,0,0.15,1); overflow: hidden; }
 .side-panel.open { transform: translateX(0); }
 body[dir="rtl"] .side-panel { right: auto; left: 0; border-left: none; border-right: 1px solid var(--bs); transform: translateX(-100%); }
@@ -254,12 +254,34 @@ body[dir="rtl"] .univ-name-ar { text-align: left; }
   .stats-row2 { grid-template-columns: 1fr; }
   .filter-wrap { flex-wrap: wrap; }
   .search-box, .search-box input { width: 100%; }
+  .filter-right { width: 100%; justify-content: space-between; margin-left: 0; margin-right: 0; }
+  body[dir="rtl"] .filter-right { margin-left: 0; margin-right: 0; }
   .tbl-head, .tbl-row { grid-template-columns: 2fr 1fr 80px 100px 50px; }
   .tbl-arrow { display: none; }
-  .side-panel { width: 100vw; }
+  .side-panel {
+    width: 100vw;
+    height: 100dvh;
+    height: 100vh; /* fallback */
+    top: 0;
+    border-left: none;
+    border-right: none;
+    border-radius: 0;
+  }
+  body[dir="rtl"] .side-panel {
+    border-right: none;
+    border-left: none;
+  }
 }
 @media (max-width: 600px) {
   .grid-4 { grid-template-columns: 1fr; }
+  /* Hide Grid/Table toggle — mobile always uses grid */
+  .vtoggle { display: none; }
+  /* Two filter dropdowns per row */
+  .filter-wrap select.inp { width: calc(50% - 4px) !important; }
+  /* Page-size select: keep natural width, space-between handles alignment */
+  .filter-right select.inp { width: auto !important; flex: none; }
+  /* Panel is full-screen on mobile — no need for backdrop blur */
+  .backdrop.open { backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
 </style>
 </head>
@@ -450,7 +472,7 @@ const state = (() => {
   return {
     lang:     s.lang     || 'en',
     viewMode: s.viewMode || 'grid',
-    theme:    s.theme    || 'dark',
+    theme:    s.theme    || 'light',
     pageSize: s.pageSize || 100,
     search: '', filterDeg:'all', filterSch:'all', filterUniv:'all', filterLang:'all',
     programs: [], institutionsMap: new Map(),
@@ -666,7 +688,8 @@ function renderResults() {
   }
   if (all.length === 0) { container.innerHTML = `<div class="empty-msg">${esc(t.empty)}</div>`; return; }
 
-  if (state.viewMode === 'grid') {
+  const effectiveView = window.innerWidth <= 600 ? 'grid' : state.viewMode;
+  if (effectiveView === 'grid') {
     container.innerHTML = `<div class="grid-4">${list.map(cardHTML).join('')}</div>`;
     container.querySelectorAll('.card').forEach(el =>
       el.addEventListener('click', () => openPanel(el.dataset.id)));
