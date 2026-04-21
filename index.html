@@ -133,6 +133,7 @@ html.light .theme-btn .icon-moon { display: inline-block; }
 .chart-rows { display: flex; flex-direction: column; gap: 7px; }
 .chart-row { display: flex; align-items: center; gap: 10px; }
 .chart-label { font-size: 12px; color: var(--t3); width: 120px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body[dir="rtl"] .chart-label { direction: ltr; text-align: left; }
 .mini-bar-track { background: var(--card-h); border-radius: 3px; height: 5px; overflow: hidden; flex: 1; }
 .mini-bar-fill  { height: 100%; border-radius: 3px; background: var(--ba); transition: width 0.4s ease; }
 .chart-count { font-size: 12px; color: var(--t4); width: 32px; text-align: right; flex-shrink: 0; }
@@ -447,7 +448,7 @@ const T = {
     aboutProgram:'عن البرنامج', aboutUniversity:'عن الجامعة',
     whyStudy:'لماذا الدراسة هنا', established:'التأسيس',
     close:'إغلاق', empty:'لم يتم العثور على برامج.',
-    byDegree:'حسب الدرجة', byScholarship:'حسب المنحة', topUnivs:'أفضل الجامعات',
+    byDegree:'حسب الدرجة', byScholarship:'حسب المنحة', topUnivs:'الجامعات الأكثر برامجاً',
     statPrograms:'البرامج', statUnivs:'الجامعات', statCities:'المدن', statWithSch:'بمنحة',
     themeLight:'فاتح', themeDark:'داكن',
   }
@@ -557,6 +558,18 @@ function formatDate(d) {
 function esc(s) {
   if (s == null) return '';
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function formatDuration(dur) {
+  if (!dur) return '';
+  if (state.lang !== 'ar') return esc(dur);
+  const m = String(dur).match(/^(\d+)\s+year/i);
+  if (!m) return esc(dur);
+  const n = parseInt(m[1]);
+  const toAr = s => String(s).replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
+  if (n === 1) return 'سنة';
+  if (n === 2) return 'سنتان';
+  return `${toAr(n)} سنوات`;
 }
 
 function tuitionHTML(p) {
@@ -719,7 +732,7 @@ function cardHTML(p) {
         <div class="card-title-ar">${esc(p.program_name_arabic||'')}</div>
       </div>
       <div class="card-univ">${esc(p.institution_name||'')}</div>
-      <div class="card-meta"><span>${esc(p.duration||'')}</span>${tuitionHTML(p)}</div>
+      <div class="card-meta"><span>${formatDuration(p.duration)}</span>${tuitionHTML(p)}</div>
       <div class="card-sub">${esc(p.language||'')} · ${esc(p.city||'')}</div>
     </div>`;
 }
@@ -734,7 +747,7 @@ function rowHTML(p) {
       <div class="tbl-univ">${esc(p.institution_name||'')}</div>
       <span class="badge badge-degree">${esc(deg)}</span>
       <span class="badge ${sc}">${esc(p.scholarship_type||'')}</span>
-      <span class="tbl-dur">${esc(p.duration||'')}</span>
+      <span class="tbl-dur">${formatDuration(p.duration)}</span>
       <span class="tbl-arrow"><i data-lucide="chevron-right" class="icon-sm"></i></span>
     </div>`;
 }
@@ -812,7 +825,7 @@ function renderPanel() {
       <div class="panel-section">
         <div class="panel-label">${esc(t.aboutProgram)}</div>
         <div class="info-grid">
-          <div class="info-cell"><div class="info-cell-label">${esc(t.duration)}</div><div class="info-cell-value">${esc(p.duration||'—')}</div></div>
+          <div class="info-cell"><div class="info-cell-label">${esc(t.duration)}</div><div class="info-cell-value">${formatDuration(p.duration) || '—'}</div></div>
           <div class="info-cell"><div class="info-cell-label">${esc(t.tuition)}</div><div class="info-cell-value" style="${tuitionStyle}">${tuitionVal}</div></div>
           <div class="info-cell"><div class="info-cell-label">${esc(t.gender)}</div><div class="info-cell-value">${esc(p.gender||'—')}</div></div>
           <div class="info-cell"><div class="info-cell-label">${esc(t.city)}</div><div class="info-cell-value">${esc(p.city||'—')}</div></div>
