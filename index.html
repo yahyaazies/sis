@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study in Saudi — Program Database 1447H</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+/* ── THEME VARIABLES ── */
+:root {
+  --bg:       #0f0f0f;
+  --surface:  #0a0a0a;
+  --card:     #141414;
+  --card-h:   #161616;
+  --card-sel: #171717;
+  --bs:       #1a1a1a;
+  --bd:       #1f1f1f;
+  --ba:       #2a2a2a;
+  --bst:      #333;
+  --t1:       #e2e2e2;
+  --t2:       #aaa;
+  --t3:       #777;
+  --t4:       #555;
+  --t5:       #444;
+  --fb:       rgba(10,10,10,0.96);
+  --pb:       #111;
+  --ph:       #0e0e0e;
+  --ic:       #161616;
+  --ub:       #141414;
+  --link:     #5a8ae0;
+  --link-h:   #7ca3f0;
+  --ftbg:     #0a0a0a;
+  --bdc:      rgba(0,0,0,0.55);
+}
+html.light {
+  --bg:       #f0f0f0;
+  --surface:  #fafafa;
+  --card:     #ffffff;
+  --card-h:   #f5f5f5;
+  --card-sel: #eef2ff;
+  --bs:       #e4e4e4;
+  --bd:       #dedede;
+  --ba:       #c8c8c8;
+  --bst:      #aaa;
+  --t1:       #141414;
+  --t2:       #333;
+  --t3:       #555;
+  --t4:       #777;
+  --t5:       #999;
+  --fb:       rgba(250,250,250,0.96);
+  --pb:       #ffffff;
+  --ph:       #f5f5f5;
+  --ic:       #f0f0f0;
+  --ub:       #f8f8f8;
+  --link:     #2563eb;
+  --link-h:   #1d4ed8;
+  --ftbg:     #fafafa;
+  --bdc:      rgba(0,0,0,0.35);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; }
+body { background: var(--bg); color: var(--t1); font-family: 'IBM Plex Sans Arabic', sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+::-webkit-scrollbar { width: 5px; background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--bd); border-radius: 3px; }
+button, input, select { font-family: inherit; }
+
+/* Lucide icons */
+svg.lucide { display: inline-block; vertical-align: middle; flex-shrink: 0; stroke-width: 1.75; }
+.icon-sm { width: 14px; height: 14px; }
+.icon-xs { width: 13px; height: 13px; }
+
+/* Badges */
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+.badge-full    { background: rgba(34,197,94,0.12);   color: #4ade80; border: 1px solid rgba(34,197,94,0.25); }
+.badge-free    { background: rgba(100,116,139,0.12); color: #94a3b8; border: 1px solid rgba(100,116,139,0.25); }
+.badge-partial { background: rgba(245,158,11,0.12);  color: #fbbf24; border: 1px solid rgba(245,158,11,0.25); }
+.badge-paid    { background: rgba(82,82,82,0.15);    color: #a1a1aa; border: 1px solid rgba(82,82,82,0.25); }
+.badge-degree  { background: var(--bd); color: var(--t3); border: 1px solid var(--ba); }
+.badge-lang    { background: var(--card); color: var(--t4); border: 1px solid var(--bd); }
+/* Better contrast in light mode */
+html.light .badge-full    { color: #166534; background: rgba(34,197,94,0.12);   border-color: rgba(34,197,94,0.3); }
+html.light .badge-partial { color: #92400e; background: rgba(245,158,11,0.12);  border-color: rgba(245,158,11,0.3); }
+html.light .badge-free    { color: #334155; background: rgba(100,116,139,0.12); border-color: rgba(100,116,139,0.3); }
+html.light .badge-paid    { color: #525252; background: rgba(80,80,80,0.08);    border-color: rgba(80,80,80,0.2); }
+
+/* Inputs */
+.inp { background: var(--card); border: 1px solid var(--bd); border-radius: 5px; color: var(--t1); font-size: 13px; outline: none; transition: border-color 0.15s; }
+.inp:focus, .inp:hover { border-color: var(--ba); }
+select.inp {
+  height: 34px; padding: 0 28px 0 10px; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23777'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center;
+}
+body[dir="rtl"] select.inp { padding: 0 10px 0 28px; background-position: left 10px center; }
+
+/* Nav */
+nav { background: var(--surface); border-bottom: 1px solid var(--bs); padding: 0 24px; height: 50px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.nav-left  { display: flex; align-items: center; gap: 8px; }
+.nav-right { display: flex; align-items: center; gap: 8px; }
+.theme-btn { background: transparent; border: 1px solid var(--bd); border-radius: 5px; padding: 5px 10px; cursor: pointer; color: var(--t3); font-size: 13px; transition: all 0.15s; display: flex; align-items: center; gap: 6px; }
+.theme-btn:hover { border-color: var(--ba); color: var(--t2); }
+/* Sun shown in dark mode (to switch to light); moon shown in light mode (to switch to dark) */
+.theme-btn .icon-moon { display: none; }
+html.light .theme-btn .icon-sun  { display: none; }
+html.light .theme-btn .icon-moon { display: inline-block; }
+
+.lang-toggle { display: flex; gap: 4px; }
+.lang-btn { background: transparent; border: 1px solid transparent; border-radius: 4px; padding: 3px 9px; cursor: pointer; font-size: 12px; color: var(--t4); transition: all 0.12s; }
+.lang-btn.active { background: var(--card); border-color: var(--bst); color: var(--t1); }
+.lang-btn:hover:not(.active) { color: var(--t2); }
+
+/* Hero */
+.hero { background: var(--surface); border-bottom: 1px solid var(--bs); padding: 20px 24px 18px; }
+.hero-inner { max-width: 680px; }
+.hero h1 { font-size: 22px; font-weight: 600; color: var(--t1); margin-bottom: 4px; letter-spacing: -0.02em; line-height: 1.3; }
+.hero .desc { font-size: 13px; color: var(--t3); line-height: 1.7; margin-bottom: 8px; }
+.hero .disclaimer { font-size: 12px; color: var(--t5); line-height: 1.6; margin-bottom: 6px; max-width: 580px; }
+.hero .updated { font-size: 12px; color: var(--t5); }
+
+/* Stats */
+.stats-section { background: var(--surface); border-bottom: 1px solid var(--bs); padding: 18px 24px; }
+.stats-row1 { display: flex; gap: 32px; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--card-h); flex-wrap: wrap; }
+.stat-big { display: flex; flex-direction: column; gap: 2px; }
+.stat-big-num { font-size: 28px; font-weight: 600; color: var(--t1); letter-spacing: -0.03em; line-height: 1; }
+.stat-big-label { font-size: 12px; color: var(--t4); }
+.stats-row2 { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; }
+.chart-heading { font-size: 10px; color: var(--t5); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+.chart-rows { display: flex; flex-direction: column; gap: 7px; }
+.chart-row { display: flex; align-items: center; gap: 10px; }
+.chart-label { font-size: 12px; color: var(--t3); width: 120px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini-bar-track { background: var(--card-h); border-radius: 3px; height: 5px; overflow: hidden; flex: 1; }
+.mini-bar-fill  { height: 100%; border-radius: 3px; background: var(--ba); transition: width 0.4s ease; }
+.chart-count { font-size: 12px; color: var(--t4); width: 32px; text-align: right; flex-shrink: 0; }
+
+/* Filter bar */
+.filter-bar { position: sticky; top: 0; z-index: 100; background: var(--fb); backdrop-filter: blur(10px); border-bottom: 1px solid var(--bs); }
+.filter-wrap { padding: 10px 24px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.search-box { position: relative; flex-shrink: 0; }
+.search-icon-wrap { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--t4); pointer-events: none; display: flex; align-items: center; }
+body[dir="rtl"] .search-icon-wrap { left: auto; right: 10px; }
+.search-box input { height: 34px; width: 200px; padding: 0 10px 0 32px; }
+body[dir="rtl"] .search-box input { padding: 0 32px 0 10px; }
+.filter-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+body[dir="rtl"] .filter-right { margin-left: 0; margin-right: auto; }
+.showing-count { font-size: 12px; color: var(--t4); white-space: nowrap; }
+.vtoggle { display: flex; border: 1px solid var(--bd); border-radius: 5px; overflow: hidden; }
+.vtoggle button { background: transparent; border: none; padding: 5px 10px; cursor: pointer; color: var(--t3); transition: background 0.12s, color 0.12s; display: flex; align-items: center; gap: 5px; font-size: 12px; }
+.vtoggle button.active { background: var(--bd); color: var(--t1); }
+.vtoggle button:hover:not(.active) { background: var(--card-h); color: var(--t2); }
+
+/* Main */
+main { flex: 1; padding: 16px 24px 32px; }
+
+/* Cards */
+.grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
+.card { background: var(--card); border: 1px solid var(--bd); border-radius: 7px; padding: 14px; display: flex; flex-direction: column; gap: 9px; cursor: pointer; transition: border-color 0.15s, background 0.1s; }
+.card:hover { border-color: var(--ba); background: var(--card-h); }
+.card.selected { border-color: var(--bst); background: var(--card-sel); }
+.card-badges { display: flex; gap: 5px; flex-wrap: wrap; }
+.card-title { font-size: 14px; font-weight: 600; color: var(--t1); line-height: 1.4; }
+.card-title-ar { font-size: 13px; color: var(--t4); margin-top: 3px; line-height: 1.5; direction: rtl; text-align: right; }
+.card-univ { font-size: 13px; color: var(--t3); }
+.card-meta { display: flex; gap: 14px; font-size: 13px; color: var(--t4); }
+.card-sub { font-size: 12px; color: var(--t5); }
+.tuition-free { color: #4ade80; }
+html.light .tuition-free { color: #16a34a; }
+.tuition-paid { color: var(--t3); }
+
+/* Table */
+.tbl-head { display: grid; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--bd); grid-template-columns: 2.5fr 1.5fr 90px 130px 60px 36px; }
+.tbl-head span { font-size: 11px; font-weight: 600; color: var(--t4); text-transform: uppercase; letter-spacing: 0.06em; }
+.tbl-row { display: grid; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--bs); align-items: center; cursor: pointer; grid-template-columns: 2.5fr 1.5fr 90px 130px 60px 36px; }
+.tbl-row:hover { background: var(--card-h); }
+.tbl-row.selected { background: var(--card-sel); }
+.tbl-name { font-size: 14px; font-weight: 500; color: var(--t1); }
+.tbl-name-ar { font-size: 12px; color: var(--t4); margin-top: 2px; direction: rtl; text-align: right; }
+.tbl-univ { font-size: 13px; color: var(--t3); }
+.tbl-dur  { font-size: 13px; color: var(--t3); }
+.tbl-arrow { color: var(--t4); display: flex; align-items: center; }
+
+/* Empty / loading */
+.empty-msg { text-align: center; padding: 60px; color: var(--t5); font-size: 14px; }
+.skeleton-card { background: var(--card); border: 1px solid var(--bd); border-radius: 7px; height: 150px; animation: pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+/* Footer */
+footer { background: var(--ftbg); border-top: 1px solid var(--bs); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; position: sticky; bottom: 0; z-index: 50; }
+.footer-source { font-size: 12px; color: var(--t4); text-decoration: none; }
+.footer-source:hover { color: var(--t2); }
+.footer-by { font-size: 11px; color: var(--t5); }
+.bmc-btn { background: transparent; border: 1px solid var(--bd); border-radius: 5px; padding: 5px 14px; cursor: pointer; color: var(--t3); font-size: 12px; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
+.bmc-btn:hover { border-color: var(--bst); color: var(--t2); }
+
+/* Side panel */
+.backdrop { position: fixed; inset: 0; background: var(--bdc); z-index: 200; opacity: 0; transition: opacity 0.22s; pointer-events: none; }
+.backdrop.open { opacity: 1; pointer-events: all; }
+.side-panel { position: fixed; top: 0; right: 0; height: 100vh; width: 400px; background: var(--pb); border-left: 1px solid var(--bs); z-index: 201; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.25s cubic-bezier(0.32,0,0.15,1); overflow: hidden; }
+.side-panel.open { transform: translateX(0); }
+body[dir="rtl"] .side-panel { right: auto; left: 0; border-left: none; border-right: 1px solid var(--bs); transform: translateX(-100%); }
+body[dir="rtl"] .side-panel.open { transform: translateX(0); }
+
+.panel-header { padding: 16px 20px 14px; border-bottom: 1px solid var(--bs); flex-shrink: 0; background: var(--ph); }
+.panel-header-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.panel-title { flex: 1; min-width: 0; }
+.panel-title-en { font-size: 16px; font-weight: 600; color: var(--t1); line-height: 1.4; margin-bottom: 4px; }
+.panel-title-ar { font-size: 14px; color: var(--t4); line-height: 1.5; direction: rtl; text-align: right; }
+body[dir="rtl"] .panel-title-ar { text-align: left; }
+.panel-badges { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
+.close-btn { background: transparent; border: 1px solid var(--bd); border-radius: 5px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--t3); flex-shrink: 0; transition: all 0.12s; }
+.close-btn:hover { border-color: var(--bst); color: var(--t2); background: var(--card-h); }
+
+.panel-body { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 22px; }
+.panel-section { display: flex; flex-direction: column; gap: 10px; }
+.panel-label { font-size: 11px; font-weight: 600; color: var(--t4); text-transform: uppercase; letter-spacing: 0.08em; }
+
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.info-cell { background: var(--ic); border: 1px solid var(--bd); border-radius: 6px; padding: 10px 12px; }
+.info-cell-label { font-size: 11px; color: var(--t4); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 4px; }
+.info-cell-value { font-size: 14px; color: var(--t1); font-weight: 500; }
+
+.univ-block { background: var(--ub); border: 1px solid var(--bd); border-radius: 7px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.univ-name { font-size: 14px; font-weight: 600; color: var(--t1); margin-bottom: 2px; }
+.univ-name-ar { font-size: 13px; color: var(--t4); direction: rtl; text-align: right; }
+body[dir="rtl"] .univ-name-ar { text-align: left; }
+.univ-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
+.univ-meta span { font-size: 12px; color: var(--t3); }
+.univ-meta .sep { color: var(--t5); }
+.univ-desc { font-size: 13px; color: var(--t3); line-height: 1.65; margin-top: 4px; }
+.univ-kv-label { font-size: 11px; color: var(--t5); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 4px; }
+.univ-kv-value { font-size: 13px; color: var(--t3); }
+
+.univ-contact { display: flex; flex-direction: column; gap: 6px; margin-top: 2px; }
+.univ-contact-row { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--t3); }
+.univ-contact-row svg { flex-shrink: 0; color: var(--t4); }
+.contact-link { color: var(--link); text-decoration: none; }
+.contact-link:hover { color: var(--link-h); text-decoration: underline; }
+
+.why-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.why-list li { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: var(--t2); line-height: 1.5; }
+.why-list li::before { content: '—'; color: var(--t4); flex-shrink: 0; margin-top: 1px; }
+
+.panel-footer { padding: 14px 20px; border-top: 1px solid var(--bs); flex-shrink: 0; background: var(--ph); }
+.cta-btn { width: 100%; background: var(--card); border: 1px solid var(--ba); border-radius: 6px; padding: 11px 16px; cursor: pointer; font-size: 13px; color: var(--link); display: flex; align-items: center; justify-content: center; gap: 7px; text-decoration: none; transition: background 0.12s, border-color 0.12s, color 0.12s; }
+.cta-btn:hover { background: var(--card-h); border-color: var(--bst); color: var(--link-h); }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .grid-4 { grid-template-columns: repeat(2,1fr); }
+  .stats-row2 { grid-template-columns: 1fr; }
+  .filter-wrap { flex-wrap: wrap; }
+  .search-box, .search-box input { width: 100%; }
+  .tbl-head, .tbl-row { grid-template-columns: 2fr 1fr 80px 100px 50px; }
+  .tbl-arrow { display: none; }
+  .side-panel { width: 100vw; }
+}
+@media (max-width: 600px) {
+  .grid-4 { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <button class="theme-btn" id="theme-toggle" aria-label="Toggle theme">
+      <i data-lucide="sun"  class="icon-sm icon-sun"></i>
+      <i data-lucide="moon" class="icon-sm icon-moon"></i>
+      <span id="theme-label">Light</span>
+    </button>
+  </div>
+  <div class="nav-right">
+    <div class="lang-toggle" id="lang-toggle">
+      <button class="lang-btn" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="id">ID</button>
+      <button class="lang-btn" data-lang="ar">AR</button>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="hero-inner">
+    <h1 id="hero-title"></h1>
+    <p class="desc" id="hero-desc"></p>
+    <p class="disclaimer" id="hero-disclaimer"></p>
+    <span class="updated" id="hero-updated"></span>
+  </div>
+</header>
+
+<section class="stats-section">
+  <div class="stats-row1" id="stats-row1"></div>
+  <div class="stats-row2" id="stats-row2"></div>
+</section>
+
+<div class="filter-bar">
+  <div class="filter-wrap">
+    <div class="search-box">
+      <span class="search-icon-wrap">
+        <i data-lucide="search" class="icon-sm"></i>
+      </span>
+      <input class="inp" type="text" id="search-input">
+    </div>
+    <select class="inp" id="filter-degree"      style="width:130px"></select>
+    <select class="inp" id="filter-scholarship" style="width:160px"></select>
+    <select class="inp" id="filter-university"  style="width:195px"></select>
+    <select class="inp" id="filter-language"    style="width:140px"></select>
+    <div class="filter-right">
+      <span class="showing-count" id="showing-count"></span>
+      <select class="inp" id="page-size" style="width:80px">
+        <option value="100">100</option>
+        <option value="500">500</option>
+        <option value="all" id="ps-all-opt">All</option>
+      </select>
+      <div class="vtoggle" id="view-toggle">
+        <button data-view="grid">
+          <i data-lucide="layout-grid" class="icon-xs"></i>
+          <span data-i18n="gridView"></span>
+        </button>
+        <button data-view="table">
+          <i data-lucide="list" class="icon-xs"></i>
+          <span data-i18n="tableView"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div id="results"></div>
+</main>
+
+<footer>
+  <div style="display:flex;flex-direction:column;gap:3px">
+    <a href="https://studyinsaudi.sa" target="_blank" rel="noopener" class="footer-source" id="footer-source"></a>
+    <span class="footer-by" id="footer-by"></span>
+  </div>
+  <a href="https://ko-fi.com/yahyaazies" target="_blank" rel="noopener" class="bmc-btn">
+    <i data-lucide="coffee" class="icon-sm"></i>
+    <span id="bmc-label"></span>
+  </a>
+</footer>
+
+<div class="backdrop" id="backdrop"></div>
+<aside class="side-panel" id="side-panel" role="dialog" aria-modal="true"></aside>
+
+<script>
+/* ── CONFIG ── */
+const SUPABASE_URL  = 'https://jtfajecnpnpxueijmlqy.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0ZmFqZWNucG5weHVlaWptbHF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3MjI5ODcsImV4cCI6MjA5MjI5ODk4N30.Vt5AZj3oY85iEb6sq1S-V5xe4oQI0HAsPUr4nbHf87Y';
+
+/* ── TRANSLATIONS ── */
+const T = {
+  en: {
+    dir:'ltr',
+    siteName:'Study in Saudi Database 1447H',
+    siteDesc:'Browse scholarship and regular study programs from universities across Saudi Arabia.',
+    disclaimer:'This database is independently compiled from publicly available data on studyinsaudi.sa. Not affiliated with or endorsed by the Ministry of Education of Saudi Arabia.',
+    lastUpdated: d => `Last updated: ${d}`,
+    searchPlaceholder:'Search programs...',
+    allDegrees:'All Degrees', allScholarships:'All Scholarships',
+    allUniversities:'All Universities', allLanguages:'All Languages',
+    showing: (n,t) => n < t ? `Showing ${n} of ${t} programs` : `${t} programs`,
+    gridView:'Grid', tableView:'Table', pageAll:'All',
+    viewOn:'View Program on studyinsaudi.sa',
+    duration:'Duration', tuition:'Tuition', gender:'Gender', city:'City',
+    accreditation:'Accreditation', ranking:'Ranking', programs:'Programs',
+    colProgram:'Program', colUniv:'University', colDegree:'Degree',
+    colSch:'Scholarship', colDur:'Duration', colLink:'',
+    footerSource:'Data from studyinsaudi.sa · Ministry of Education, KSA',
+    footerBy:'by yahyaazies', buyMeCoffee:'Buy Me a Coffee',
+    aboutProgram:'About this Program', aboutUniversity:'About the University',
+    whyStudy:'Why Study Here', established:'Est.',
+    close:'Close', empty:'No programs found.',
+    byDegree:'By Degree', byScholarship:'By Scholarship', topUnivs:'Top Universities',
+    statPrograms:'Programs', statUnivs:'Universities', statCities:'Cities', statWithSch:'With Scholarship',
+    themeLight:'Light', themeDark:'Dark',
+  },
+  id: {
+    dir:'ltr',
+    siteName:'Study in Saudi Database 1447H',
+    siteDesc:'Jelajahi program beasiswa dan reguler dari universitas-universitas di Arab Saudi.',
+    disclaimer:'Database ini dikompilasi secara independen dari data publik di studyinsaudi.sa. Tidak berafiliasi dengan atau didukung oleh Kementerian Pendidikan Arab Saudi.',
+    lastUpdated: d => `Terakhir diperbarui: ${d}`,
+    searchPlaceholder:'Cari program...',
+    allDegrees:'Semua Jenjang', allScholarships:'Semua Beasiswa',
+    allUniversities:'Semua Universitas', allLanguages:'Semua Bahasa',
+    showing: (n,t) => n < t ? `Menampilkan ${n} dari ${t} program` : `${t} program`,
+    gridView:'Grid', tableView:'Tabel', pageAll:'Semua',
+    viewOn:'Lihat Program di studyinsaudi.sa',
+    duration:'Durasi', tuition:'Biaya', gender:'Gender', city:'Kota',
+    accreditation:'Akreditasi', ranking:'Peringkat', programs:'Program',
+    colProgram:'Program', colUniv:'Universitas', colDegree:'Jenjang',
+    colSch:'Beasiswa', colDur:'Durasi', colLink:'',
+    footerSource:'Data dari studyinsaudi.sa · Kementerian Pendidikan KSA',
+    footerBy:'oleh yahyaazies', buyMeCoffee:'Traktir Secangkir Kopi',
+    aboutProgram:'Tentang Program', aboutUniversity:'Tentang Universitas',
+    whyStudy:'Kenapa Kuliah di Sini', established:'Berdiri',
+    close:'Tutup', empty:'Tidak ada program ditemukan.',
+    byDegree:'Berdasarkan Jenjang', byScholarship:'Berdasarkan Beasiswa', topUnivs:'Universitas Teratas',
+    statPrograms:'Program', statUnivs:'Universitas', statCities:'Kota', statWithSch:'Beasiswa',
+    themeLight:'Terang', themeDark:'Gelap',
+  },
+  ar: {
+    dir:'rtl',
+    siteName:'قاعدة البرامج لمنصة ادرس في السعودية 1447هـ',
+    siteDesc:'تصفّح برامج المنح والدراسة النظامية في الجامعات السعودية.',
+    disclaimer:'هذه القاعدة جُمعت بشكل مستقل من البيانات المتاحة للعموم على studyinsaudi.sa. غير تابعة لوزارة التعليم في المملكة العربية السعودية ولا مُعتمَدة منها.',
+    lastUpdated: d => `آخر تحديث: ${d}`,
+    searchPlaceholder:'ابحث عن البرامج...',
+    allDegrees:'كل الدرجات', allScholarships:'كل المنح',
+    allUniversities:'كل الجامعات', allLanguages:'كل اللغات',
+    showing: (n,t) => n < t ? `عرض ${n} من ${t} برنامجاً` : `${t} برنامجاً`,
+    gridView:'شبكة', tableView:'جدول', pageAll:'الكل',
+    viewOn:'عرض البرنامج في studyinsaudi.sa',
+    duration:'المدة', tuition:'الرسوم', gender:'الجنس', city:'المدينة',
+    accreditation:'الاعتماد', ranking:'التصنيف', programs:'البرامج',
+    colProgram:'البرنامج', colUniv:'الجامعة', colDegree:'الدرجة',
+    colSch:'المنحة', colDur:'المدة', colLink:'',
+    footerSource:'بيانات من studyinsaudi.sa · وزارة التعليم، المملكة العربية السعودية',
+    footerBy:'بواسطة yahyaazies', buyMeCoffee:'اشري لي قهوة',
+    aboutProgram:'عن البرنامج', aboutUniversity:'عن الجامعة',
+    whyStudy:'لماذا الدراسة هنا', established:'التأسيس',
+    close:'إغلاق', empty:'لم يتم العثور على برامج.',
+    byDegree:'حسب الدرجة', byScholarship:'حسب المنحة', topUnivs:'أفضل الجامعات',
+    statPrograms:'البرامج', statUnivs:'الجامعات', statCities:'المدن', statWithSch:'بمنحة',
+    themeLight:'فاتح', themeDark:'داكن',
+  }
+};
+
+const DEGREES      = ['Master','Bachelor','PhD','Higher Diploma'];
+const SCHOLARSHIPS = ['Full Scholarship','Free','Partial Scholarship','Paid Study'];
+const LANGUAGES    = ['Arabic','English','Arabic | English'];
+const SCH_CLASS    = {'Full Scholarship':'badge-full','Free':'badge-free','Partial Scholarship':'badge-partial','Paid Study':'badge-paid'};
+const DEG_ABBR     = {'Master':'MSc','Bachelor':'B.Sc','PhD':'PhD','Higher Diploma':'Dip.'};
+const SCH_BAR_COLOR = {
+  'Full Scholarship':'rgba(34,197,94,0.35)',
+  'Free':'rgba(100,116,139,0.3)',
+  'Partial Scholarship':'rgba(245,158,11,0.35)',
+  'Paid Study': null,
+};
+
+/* ── STATE ── */
+const state = (() => {
+  let s = {};
+  try { s = JSON.parse(localStorage.getItem('sis-v2') || '{}'); } catch {}
+  return {
+    lang:     s.lang     || 'en',
+    viewMode: s.viewMode || 'grid',
+    theme:    s.theme    || 'dark',
+    pageSize: s.pageSize || 100,
+    search: '', filterDeg:'all', filterSch:'all', filterUniv:'all', filterLang:'all',
+    programs: [], institutionsMap: new Map(),
+    loading: true, selectedProg: null, lastUpdated: null,
+  };
+})();
+
+const persist = () => localStorage.setItem('sis-v2', JSON.stringify(
+  {lang:state.lang, viewMode:state.viewMode, theme:state.theme, pageSize:state.pageSize}
+));
+
+/* ── ICONS ── */
+function applyIcons() {
+  if (window.lucide) window.lucide.createIcons();
+}
+
+/* ── SUPABASE ── */
+let _sb = null;
+function sb() {
+  if (_sb) return _sb;
+  if (!window.supabase?.createClient) { console.error('Supabase CDN not loaded'); return null; }
+  if (!SUPABASE_URL || SUPABASE_URL.includes('xxxx')) return null;
+  try { _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON); } catch(e) { console.error(e); }
+  return _sb;
+}
+
+async function loadData() {
+  const client = sb();
+  if (!client) { state.loading = false; render(); return; }
+  try {
+    let all = [], from = 0, batch = 1000;
+    while (true) {
+      const { data, error } = await client
+        .from('programs_full').select('*')
+        .order('program_name_english', {ascending: true})
+        .range(from, from + batch - 1);
+      if (error) throw error;
+      all = all.concat(data || []);
+      if (!data || data.length < batch) break;
+      from += batch;
+    }
+    state.programs = all;
+
+    const { data: insts } = await client.from('institutions')
+      .select('id,name_arabic,institution_type,description,why_study,ranking,programs_count,faculty_count,accreditation,source_url,established_year,phone,email');
+    if (insts) state.institutionsMap = new Map(insts.map(i => [i.id, i]));
+
+    if (all.length) {
+      const latest = all.reduce((mx,p) => {
+        const ts = p.last_updated ? new Date(p.last_updated).getTime() : 0;
+        return ts > mx ? ts : mx;
+      }, 0);
+      if (latest) state.lastUpdated = new Date(latest);
+    }
+  } catch(err) {
+    console.error('Supabase error:', err);
+  } finally {
+    state.loading = false;
+    render();
+    maybeOpenFromHash();
+  }
+}
+
+/* ── HELPERS ── */
+const tr    = () => T[state.lang];
+const isRTL = () => tr().dir === 'rtl';
+
+function applyTheme() {
+  document.documentElement.classList.toggle('light', state.theme === 'light');
+  const isDark = state.theme === 'dark';
+  document.getElementById('theme-label').textContent = isDark ? tr().themeLight : tr().themeDark;
+}
+
+function formatDate(d) {
+  if (!d) return '';
+  try {
+    const locale = {ar:'ar-SA', id:'id-ID', en:'en-US'}[state.lang] || 'en-US';
+    return d.toLocaleDateString(locale, {year:'numeric', month:'long', day:'numeric'});
+  } catch { return d.toISOString().slice(0,10); }
+}
+
+function esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function tuitionHTML(p) {
+  const v = p.tuition_sar_annually;
+  return (!v || v === 'Free')
+    ? `<span class="tuition-free">Free</span>`
+    : `<span class="tuition-paid">SAR ${esc(v)}/yr</span>`;
+}
+
+function filtered() {
+  const q = state.search.trim().toLowerCase();
+  return state.programs.filter(p => {
+    if (q) {
+      const en = (p.program_name_english || '').toLowerCase();
+      const ar = p.program_name_arabic || '';
+      if (!en.includes(q) && !ar.includes(state.search.trim())) return false;
+    }
+    if (state.filterDeg  !== 'all' && p.degree_level     !== state.filterDeg)  return false;
+    if (state.filterSch  !== 'all' && p.scholarship_type !== state.filterSch)  return false;
+    if (state.filterUniv !== 'all' && p.institution_name !== state.filterUniv) return false;
+    if (state.filterLang !== 'all' && p.language         !== state.filterLang) return false;
+    return true;
+  });
+}
+
+function paged(list) {
+  return state.pageSize === 'all' ? list : list.slice(0, Number(state.pageSize));
+}
+
+function uniqueUnivs() {
+  return [...new Set(state.programs.map(p => p.institution_name).filter(Boolean))].sort();
+}
+
+function computeStats() {
+  const d = state.programs, tot = d.length;
+  const univs  = new Set(d.map(p => p.institution_id || p.institution_name)).size;
+  const cities = new Set(d.map(p => p.city).filter(Boolean)).size;
+  const pctSch = tot ? Math.round(d.filter(p => p.scholarship_type && p.scholarship_type !== 'Paid Study').length / tot * 100) : 0;
+  const byDeg  = DEGREES.map(v => ({label:v, n: d.filter(p => p.degree_level===v).length}));
+  const bySch  = SCHOLARSHIPS.map(v => ({label:v, n: d.filter(p => p.scholarship_type===v).length, color: SCH_BAR_COLOR[v]}));
+  const um = new Map();
+  d.forEach(p => { const k = p.institution_name || '—'; um.set(k, (um.get(k)||0)+1); });
+  const topU = [...um.entries()]
+    .map(([l,n]) => ({label: l.replace('University','Univ.').replace('King ','K. '), n}))
+    .sort((a,b) => b.n-a.n).slice(0,5);
+  return {tot, univs, cities, pctSch, byDeg, bySch, topU};
+}
+
+/* ── RENDER: STATIC TEXT ── */
+function renderStaticText() {
+  const t = tr();
+  document.documentElement.dir  = t.dir;
+  document.documentElement.lang = state.lang;
+  document.body.dir = t.dir;
+
+  document.getElementById('hero-title').textContent      = t.siteName;
+  document.getElementById('hero-desc').textContent       = t.siteDesc;
+  document.getElementById('hero-disclaimer').textContent = t.disclaimer;
+  document.getElementById('hero-updated').textContent    = state.lastUpdated ? t.lastUpdated(formatDate(state.lastUpdated)) : '';
+  document.getElementById('search-input').placeholder    = t.searchPlaceholder;
+  document.getElementById('footer-source').textContent   = t.footerSource;
+  document.getElementById('footer-by').textContent       = t.footerBy;
+  document.getElementById('bmc-label').textContent       = t.buyMeCoffee;
+  document.getElementById('ps-all-opt').textContent      = t.pageAll;
+
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.getAttribute('data-i18n');
+    if (t[k]) el.textContent = t[k];
+  });
+  document.querySelectorAll('.lang-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.lang === state.lang));
+  document.querySelectorAll('.vtoggle button').forEach(b =>
+    b.classList.toggle('active', b.dataset.view === state.viewMode));
+
+  applyTheme();
+}
+
+/* ── RENDER: DROPDOWNS ── */
+function renderDropdowns() {
+  const t = tr();
+  const mk = (id, opts, val) => {
+    document.getElementById(id).innerHTML =
+      opts.map(o => `<option value="${esc(o.v)}"${o.v===val?' selected':''}>${esc(o.l)}</option>`).join('');
+  };
+  mk('filter-degree',      [{v:'all',l:t.allDegrees},      ...DEGREES.map(d=>({v:d,l:d}))],      state.filterDeg);
+  mk('filter-scholarship', [{v:'all',l:t.allScholarships},  ...SCHOLARSHIPS.map(s=>({v:s,l:s}))], state.filterSch);
+  mk('filter-university',  [{v:'all',l:t.allUniversities},  ...uniqueUnivs().map(u=>({v:u,l:u}))],state.filterUniv);
+  mk('filter-language',    [{v:'all',l:t.allLanguages},     ...LANGUAGES.map(l=>({v:l,l:l}))],    state.filterLang);
+  document.getElementById('page-size').value = String(state.pageSize);
+}
+
+/* ── RENDER: STATS ── */
+function renderStats() {
+  const t = tr(), s = computeStats();
+  document.getElementById('stats-row1').innerHTML = [
+    [state.loading ? '—' : s.tot.toLocaleString(), t.statPrograms],
+    [state.loading ? '—' : s.univs,  t.statUnivs],
+    [state.loading ? '—' : s.cities, t.statCities],
+    [state.loading ? '—' : s.pctSch+'%', t.statWithSch],
+  ].map(([n,l]) => `<div class="stat-big"><div class="stat-big-num">${esc(String(n))}</div><div class="stat-big-label">${esc(l)}</div></div>`).join('');
+
+  const rows = (items, max) => items.map(r => `
+    <div class="chart-row">
+      <span class="chart-label">${esc(r.label)}</span>
+      <div class="mini-bar-track"><div class="mini-bar-fill" style="width:${max?(r.n/max*100):0}%;${r.color?`background:${r.color}`:''}"></div></div>
+      <span class="chart-count">${r.n}</span>
+    </div>`).join('');
+
+  const mxD = Math.max(1,...s.byDeg.map(r=>r.n));
+  const mxS = Math.max(1,...s.bySch.map(r=>r.n));
+  const mxU = Math.max(1,...(s.topU.length ? s.topU.map(r=>r.n) : [1]));
+
+  document.getElementById('stats-row2').innerHTML = `
+    <div><div class="chart-heading">${esc(t.byDegree)}</div><div class="chart-rows">${rows(s.byDeg,mxD)}</div></div>
+    <div><div class="chart-heading">${esc(t.byScholarship)}</div><div class="chart-rows">${rows(s.bySch,mxS)}</div></div>
+    <div><div class="chart-heading">${esc(t.topUnivs)}</div><div class="chart-rows">${rows(s.topU.length?s.topU:[{label:'—',n:0}],mxU)}</div></div>`;
+}
+
+/* ── RENDER: RESULTS ── */
+function renderResults() {
+  const t = tr(), container = document.getElementById('results');
+  const all = filtered(), list = paged(all);
+  document.getElementById('showing-count').textContent =
+    state.loading ? '' : t.showing(list.length, all.length);
+
+  if (state.loading) {
+    container.innerHTML = `<div class="grid-4">${Array.from({length:8}).map(()=>`<div class="skeleton-card"></div>`).join('')}</div>`;
+    return;
+  }
+  if (all.length === 0) { container.innerHTML = `<div class="empty-msg">${esc(t.empty)}</div>`; return; }
+
+  if (state.viewMode === 'grid') {
+    container.innerHTML = `<div class="grid-4">${list.map(cardHTML).join('')}</div>`;
+    container.querySelectorAll('.card').forEach(el =>
+      el.addEventListener('click', () => openPanel(el.dataset.id)));
+  } else {
+    container.innerHTML = `
+      <div class="tbl-head">
+        ${[t.colProgram,t.colUniv,t.colDegree,t.colSch,t.colDur,t.colLink].map(h=>`<span>${esc(h)}</span>`).join('')}
+      </div>
+      ${list.map(rowHTML).join('')}`;
+    container.querySelectorAll('.tbl-row').forEach(el =>
+      el.addEventListener('click', () => openPanel(el.dataset.id)));
+  }
+  applyIcons();
+}
+
+function cardHTML(p) {
+  const sc  = SCH_CLASS[p.scholarship_type] || 'badge-paid';
+  const sel = state.selectedProg?.id === p.id ? ' selected' : '';
+  return `
+    <div class="card${sel}" data-id="${esc(p.id)}">
+      <div class="card-badges">
+        <span class="badge badge-degree">${esc(p.degree_level||'')}</span>
+        <span class="badge ${sc}">${esc(p.scholarship_type||'')}</span>
+      </div>
+      <div>
+        <div class="card-title">${esc(p.program_name_english||'')}</div>
+        <div class="card-title-ar">${esc(p.program_name_arabic||'')}</div>
+      </div>
+      <div class="card-univ">${esc(p.institution_name||'')}</div>
+      <div class="card-meta"><span>${esc(p.duration||'')}</span>${tuitionHTML(p)}</div>
+      <div class="card-sub">${esc(p.language||'')} · ${esc(p.city||'')}</div>
+    </div>`;
+}
+
+function rowHTML(p) {
+  const sc  = SCH_CLASS[p.scholarship_type] || 'badge-paid';
+  const deg = DEG_ABBR[p.degree_level] || p.degree_level || '';
+  const sel = state.selectedProg?.id === p.id ? ' selected' : '';
+  return `
+    <div class="tbl-row${sel}" data-id="${esc(p.id)}">
+      <div><div class="tbl-name">${esc(p.program_name_english||'')}</div><div class="tbl-name-ar">${esc(p.program_name_arabic||'')}</div></div>
+      <div class="tbl-univ">${esc(p.institution_name||'')}</div>
+      <span class="badge badge-degree">${esc(deg)}</span>
+      <span class="badge ${sc}">${esc(p.scholarship_type||'')}</span>
+      <span class="tbl-dur">${esc(p.duration||'')}</span>
+      <span class="tbl-arrow"><i data-lucide="chevron-right" class="icon-sm"></i></span>
+    </div>`;
+}
+
+/* ── RENDER: PANEL ── */
+function openPanel(id) {
+  const prog = state.programs.find(p => String(p.id) === String(id));
+  if (!prog) return;
+  state.selectedProg = prog;
+  history.replaceState(null, '', `#program-${prog.id}`);
+  renderPanel();
+  document.getElementById('backdrop').classList.add('open');
+  document.getElementById('side-panel').classList.add('open');
+  renderResults();
+}
+
+function closePanel() {
+  state.selectedProg = null;
+  history.replaceState(null, '', window.location.pathname + window.location.search);
+  document.getElementById('backdrop').classList.remove('open');
+  document.getElementById('side-panel').classList.remove('open');
+  renderResults();
+}
+
+function renderPanel() {
+  const p = state.selectedProg;
+  const panel = document.getElementById('side-panel');
+  if (!p) { panel.innerHTML = ''; return; }
+  const t   = tr();
+  const sc  = SCH_CLASS[p.scholarship_type] || 'badge-paid';
+  const inst = state.institutionsMap.get(p.institution_id) || {};
+
+  const nameAr  = p.institution_name_arabic  || inst.name_arabic      || '';
+  const instType= p.institution_type          || inst.institution_type || '';
+  const estYear = p.established_year          || inst.established_year || '';
+  const progCnt = p.programs_count            || inst.programs_count   || '';
+  const desc    = p.institution_description   || inst.description      || '';
+  const whyRaw  = p.why_study                 || inst.why_study        || '';
+  const accred  = p.institution_accreditation || inst.accreditation    || p.accreditation || '';
+  const ranking = p.ranking                   || inst.ranking          || '';
+  const phone   = inst.phone  || '';
+  const email   = inst.email  || '';
+  const progUrl = p.url || '#';
+
+  const isFree = !p.tuition_sar_annually || p.tuition_sar_annually === 'Free';
+  const tuitionVal   = isFree ? 'Free' : `SAR ${esc(p.tuition_sar_annually)}/yr`;
+  const tuitionStyle = isFree ? 'color:#4ade80' : '';
+  const whyPoints    = whyRaw.split(' | ').map(s => s.trim()).filter(Boolean);
+
+  const metaParts = [];
+  if (instType) metaParts.push(`<span>${esc(instType)}</span>`);
+  if (estYear)  metaParts.push(`<span>${esc(t.established)} ${esc(String(estYear))}</span>`);
+  if (progCnt)  metaParts.push(`<span>${esc(String(progCnt))} ${esc(t.programs)}</span>`);
+  const univMeta = metaParts.join('<span class="sep"> · </span>');
+
+  panel.innerHTML = `
+    <div class="panel-header">
+      <div class="panel-header-row">
+        <div class="panel-title">
+          <div class="panel-title-en">${esc(p.program_name_english||'')}</div>
+          <div class="panel-title-ar">${esc(p.program_name_arabic||'')}</div>
+        </div>
+        <button class="close-btn" id="panel-close" aria-label="${esc(t.close)}">
+          <i data-lucide="x" class="icon-sm"></i>
+        </button>
+      </div>
+      <div class="panel-badges">
+        <span class="badge badge-degree">${esc(p.degree_level||'')}</span>
+        <span class="badge ${sc}">${esc(p.scholarship_type||'')}</span>
+        ${p.language ? `<span class="badge badge-lang">${esc(p.language)}</span>` : ''}
+      </div>
+    </div>
+
+    <div class="panel-body">
+      <div class="panel-section">
+        <div class="panel-label">${esc(t.aboutProgram)}</div>
+        <div class="info-grid">
+          <div class="info-cell"><div class="info-cell-label">${esc(t.duration)}</div><div class="info-cell-value">${esc(p.duration||'—')}</div></div>
+          <div class="info-cell"><div class="info-cell-label">${esc(t.tuition)}</div><div class="info-cell-value" style="${tuitionStyle}">${tuitionVal}</div></div>
+          <div class="info-cell"><div class="info-cell-label">${esc(t.gender)}</div><div class="info-cell-value">${esc(p.gender||'—')}</div></div>
+          <div class="info-cell"><div class="info-cell-label">${esc(t.city)}</div><div class="info-cell-value">${esc(p.city||'—')}</div></div>
+        </div>
+      </div>
+
+      ${p.institution_name ? `
+      <div class="panel-section">
+        <div class="panel-label">${esc(t.aboutUniversity)}</div>
+        <div class="univ-block">
+          <div>
+            <div class="univ-name">${esc(p.institution_name)}</div>
+            ${nameAr ? `<div class="univ-name-ar">${esc(nameAr)}</div>` : ''}
+          </div>
+          ${univMeta ? `<div class="univ-meta">${univMeta}</div>` : ''}
+          ${desc    ? `<p class="univ-desc">${esc(desc)}</p>` : ''}
+          ${accred  ? `<div><div class="univ-kv-label">${esc(t.accreditation)}</div><div class="univ-kv-value">${esc(accred)}</div></div>` : ''}
+          ${ranking ? `<div><div class="univ-kv-label">${esc(t.ranking)}</div><div class="univ-kv-value">${esc(ranking)}</div></div>` : ''}
+          ${(phone || email) ? `<div class="univ-contact">${
+            phone ? `<div class="univ-contact-row"><i data-lucide="phone" class="icon-xs"></i><span>${esc(phone)}</span></div>` : ''
+          }${
+            email ? `<div class="univ-contact-row"><i data-lucide="mail" class="icon-xs"></i><a href="mailto:${esc(email)}" class="contact-link">${esc(email)}</a></div>` : ''
+          }</div>` : ''}
+        </div>
+      </div>` : ''}
+
+      ${whyPoints.length ? `
+      <div class="panel-section">
+        <div class="panel-label">${esc(t.whyStudy)}</div>
+        <ul class="why-list">${whyPoints.map(pt=>`<li>${esc(pt)}</li>`).join('')}</ul>
+      </div>` : ''}
+    </div>
+
+    <div class="panel-footer">
+      <a href="${esc(progUrl)}" target="_blank" rel="noopener" class="cta-btn">
+        <i data-lucide="external-link" class="icon-sm"></i>
+        ${esc(t.viewOn)}
+      </a>
+    </div>`;
+
+  document.getElementById('panel-close').addEventListener('click', closePanel);
+  applyIcons();
+}
+
+function maybeOpenFromHash() {
+  const m = window.location.hash.match(/^#program-(.+)$/);
+  if (!m) return;
+  const prog = state.programs.find(p => String(p.id) === m[1]);
+  if (prog) openPanel(prog.id);
+}
+
+/* ── MASTER RENDER ── */
+function render() {
+  renderStaticText();
+  renderDropdowns();
+  renderStats();
+  renderResults();
+  if (state.selectedProg) renderPanel();
+  applyIcons();
+}
+
+/* ── EVENTS ── */
+function debounce(fn, ms) {
+  let id;
+  return (...a) => { clearTimeout(id); id = setTimeout(() => fn(...a), ms); };
+}
+
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  state.theme = state.theme === 'dark' ? 'light' : 'dark';
+  persist(); applyTheme();
+});
+
+document.getElementById('lang-toggle').addEventListener('click', e => {
+  const b = e.target.closest('.lang-btn');
+  if (!b) return;
+  state.lang = b.dataset.lang;
+  persist(); render();
+});
+
+document.getElementById('view-toggle').addEventListener('click', e => {
+  const b = e.target.closest('button[data-view]');
+  if (!b) return;
+  state.viewMode = b.dataset.view;
+  persist(); renderStaticText(); renderResults();
+});
+
+document.getElementById('search-input').addEventListener('input', debounce(e => {
+  state.search = e.target.value;
+  renderResults();
+}, 300));
+
+document.getElementById('page-size').addEventListener('change', e => {
+  state.pageSize = e.target.value === 'all' ? 'all' : Number(e.target.value);
+  persist(); renderResults();
+});
+
+['filter-degree','filter-scholarship','filter-university','filter-language'].forEach(id => {
+  document.getElementById(id).addEventListener('change', e => {
+    const map = {'filter-degree':'filterDeg','filter-scholarship':'filterSch','filter-university':'filterUniv','filter-language':'filterLang'};
+    state[map[id]] = e.target.value;
+    renderResults();
+  });
+});
+
+document.getElementById('backdrop').addEventListener('click', closePanel);
+window.addEventListener('keydown', e => { if (e.key === 'Escape' && state.selectedProg) closePanel(); });
+window.addEventListener('hashchange', maybeOpenFromHash);
+
+/* ── INIT ── */
+render();
+loadData();
+</script>
+</body>
+</html>
