@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://yahyaazies.github.io/sis/sitemap.xml
