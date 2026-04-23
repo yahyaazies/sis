@@ -198,6 +198,7 @@ svg.lucide { display: inline-block; vertical-align: middle; flex-shrink: 0; stro
 .badge-lang    { background: var(--card); color: var(--t4); border: 1px solid var(--bd); }
 .badge-intl    { background: rgba(59,130,246,0.1);   color: #60a5fa; border: 1px solid rgba(59,130,246,0.25); }
 .badge-res     { background: rgba(107,114,128,0.1);  color: #9ca3af; border: 1px solid rgba(107,114,128,0.25); }
+.badge-both    { background: rgba(139,92,246,0.1);   color: #a78bfa; border: 1px solid rgba(139,92,246,0.25); }
 /* Better contrast in light mode */
 html.light .badge-full    { color: #166534; background: rgba(34,197,94,0.12);   border-color: rgba(34,197,94,0.3); }
 html.light .badge-partial { color: #92400e; background: rgba(245,158,11,0.12);  border-color: rgba(245,158,11,0.3); }
@@ -205,6 +206,7 @@ html.light .badge-free    { color: #334155; background: rgba(100,116,139,0.12); 
 html.light .badge-paid    { color: #525252; background: rgba(80,80,80,0.08);    border-color: rgba(80,80,80,0.2); }
 html.light .badge-intl    { color: #1d4ed8; background: rgba(59,130,246,0.08);  border-color: rgba(59,130,246,0.3); }
 html.light .badge-res     { color: #374151; background: rgba(107,114,128,0.08); border-color: rgba(107,114,128,0.3); }
+html.light .badge-both    { color: #6d28d9; background: rgba(139,92,246,0.08);  border-color: rgba(139,92,246,0.3); }
 
 /* Inputs */
 .inp { background: var(--card); border: 1px solid var(--bd); border-radius: 5px; color: var(--t1); font-size: 13px; outline: none; transition: border-color 0.15s; }
@@ -491,9 +493,8 @@ body[dir="rtl"] .univ-name-ar { text-align: left; }
     dan universitas pemerintah lainnya di Arab Saudi.
   </p>
   <p style="margin-top:.75rem">
-    Filter tersedia untuk jenis beasiswa (<strong style="color:#555">Full Scholarship</strong>,
-    Free, Partial Scholarship, Paid Study), bahasa pengantar
-    (Arab, Inggris), dan universitas tujuan.
+    Filter tersedia untuk jenis beasiswa, jenjang studi, bahasa pengantar,
+    kota, dan universitas tujuan.
     Cocok untuk calon mahasiswa internasional yang mencari
     <em>beasiswa penuh kuliah di Arab Saudi</em> atau
     <em>daftar kampus Arab Saudi yang menerima mahasiswa asing</em>.
@@ -611,6 +612,12 @@ const SCH_CLASS = {
   'Full Scholarship':'badge-full', 'Free':'badge-free',
   'Partial Scholarship':'badge-partial', 'Paid Study':'badge-paid',
 };
+function applicantClass(v) {
+  if (!v) return '';
+  if (v.includes('International') && v.includes('Resident')) return 'badge-both';
+  if (v.includes('International')) return 'badge-intl';
+  return 'badge-res';
+}
 const DEG_ABBR = {'Master':'MSc','Bachelor':'B.Sc','PhD':'PhD','Higher Diploma':'Dip.'};
 const SCH_BAR_COLOR = {
   'Full Scholarship':'rgba(34,197,94,0.35)',
@@ -925,7 +932,7 @@ function cardHTML(p) {
       <div class="card-badges">
         <span class="badge badge-degree">${esc(p.degree_level||'')}</span>
         <span class="badge ${sc}">${esc(p.scholarship_type||'')}</span>
-        ${p.applicant_type ? `<span class="badge ${p.applicant_type==='International'?'badge-intl':'badge-res'}">${esc(p.applicant_type)}</span>` : ''}
+        ${p.applicant_type ? `<span class="badge ${applicantClass(p.applicant_type)}">${esc(p.applicant_type)}</span>` : ''}
       </div>
       <div>
         <div class="card-title">${esc(p.program_name_english||'')}</div>
@@ -1029,7 +1036,7 @@ function renderPanel() {
           <div class="info-cell"><div class="info-cell-label">${esc(t.tuition)}</div><div class="info-cell-value" style="${tuitionStyle}">${tuitionVal}</div></div>
           <div class="info-cell"><div class="info-cell-label">${esc(t.gender)}</div><div class="info-cell-value">${esc(p.gender||'—')}</div></div>
           <div class="info-cell"><div class="info-cell-label">${esc(t.city)}</div><div class="info-cell-value">${esc(p.city||'—')}</div></div>
-          ${p.applicant_type ? `<div class="info-cell"><div class="info-cell-label">${esc(t.allApplicants.replace(/^(All|Semua|كل)\s/,''))}</div><div class="info-cell-value"><span class="badge ${p.applicant_type==='International'?'badge-intl':'badge-res'}" style="font-size:12px">${esc(p.applicant_type)}</span></div></div>` : ''}
+          ${p.applicant_type ? `<div class="info-cell"><div class="info-cell-label">${esc(t.allApplicants.replace(/^(All|Semua|كل)\s/,''))}</div><div class="info-cell-value"><span class="badge ${applicantClass(p.applicant_type)}" style="font-size:12px">${esc(p.applicant_type)}</span></div></div>` : ''}
         </div>
       </div>
 
