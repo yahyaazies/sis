@@ -86,7 +86,7 @@
       ],
       "temporalCoverage": "2026",
       "license": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
-      "spatialCoverage": "Saudi Arabia"
+      "spatialCoverage": "Saudi Arabia"   
     },
     {
       "@type": "WebSite",
@@ -196,11 +196,15 @@ svg.lucide { display: inline-block; vertical-align: middle; flex-shrink: 0; stro
 .badge-paid    { background: rgba(82,82,82,0.15);    color: #a1a1aa; border: 1px solid rgba(82,82,82,0.25); }
 .badge-degree  { background: var(--bd); color: var(--t3); border: 1px solid var(--ba); }
 .badge-lang    { background: var(--card); color: var(--t4); border: 1px solid var(--bd); }
+.badge-intl    { background: rgba(59,130,246,0.1);   color: #60a5fa; border: 1px solid rgba(59,130,246,0.25); }
+.badge-res     { background: rgba(107,114,128,0.1);  color: #9ca3af; border: 1px solid rgba(107,114,128,0.25); }
 /* Better contrast in light mode */
 html.light .badge-full    { color: #166534; background: rgba(34,197,94,0.12);   border-color: rgba(34,197,94,0.3); }
 html.light .badge-partial { color: #92400e; background: rgba(245,158,11,0.12);  border-color: rgba(245,158,11,0.3); }
 html.light .badge-free    { color: #334155; background: rgba(100,116,139,0.12); border-color: rgba(100,116,139,0.3); }
 html.light .badge-paid    { color: #525252; background: rgba(80,80,80,0.08);    border-color: rgba(80,80,80,0.2); }
+html.light .badge-intl    { color: #1d4ed8; background: rgba(59,130,246,0.08);  border-color: rgba(59,130,246,0.3); }
+html.light .badge-res     { color: #374151; background: rgba(107,114,128,0.08); border-color: rgba(107,114,128,0.3); }
 
 /* Inputs */
 .inp { background: var(--card); border: 1px solid var(--bd); border-radius: 5px; color: var(--t1); font-size: 13px; outline: none; transition: border-color 0.15s; }
@@ -440,10 +444,12 @@ body[dir="rtl"] .univ-name-ar { text-align: left; }
       </span>
       <input class="inp" type="text" id="search-input">
     </div>
-    <select class="inp" id="filter-degree"      style="width:130px"></select>
     <select class="inp" id="filter-scholarship" style="width:160px"></select>
-    <select class="inp" id="filter-university"  style="width:195px"></select>
+    <select class="inp" id="filter-degree"      style="width:130px"></select>
+    <select class="inp" id="filter-applicant"   style="width:155px"></select>
     <select class="inp" id="filter-language"    style="width:140px"></select>
+    <select class="inp" id="filter-city"        style="width:175px"></select>
+    <select class="inp" id="filter-university"  style="width:195px"></select>
     <div class="filter-right">
       <span class="showing-count" id="showing-count"></span>
       <select class="inp" id="page-size" style="width:80px">
@@ -528,7 +534,8 @@ const T = {
     lastUpdated: d => `Last updated: ${d}`,
     searchPlaceholder:'Search programs...',
     allDegrees:'All Degrees', allScholarships:'All Scholarships',
-    allUniversities:'All Universities', allLanguages:'All Languages',
+    allUniversities:'All Universities', allLanguages:'All Languages', allCities:'All Cities',
+    allApplicants:'All Applicants', international:'International', resident:'Resident',
     showing: (n,t) => n < t ? `Showing ${n} of ${t} programs` : `${t} programs`,
     gridView:'Grid', tableView:'Table', pageAll:'All',
     viewOn:'View Program on studyinsaudi.sa',
@@ -553,7 +560,8 @@ const T = {
     lastUpdated: d => `Terakhir diperbarui: ${d}`,
     searchPlaceholder:'Cari program...',
     allDegrees:'Semua Jenjang', allScholarships:'Semua Beasiswa',
-    allUniversities:'Semua Universitas', allLanguages:'Semua Bahasa',
+    allUniversities:'Semua Universitas', allLanguages:'Semua Bahasa', allCities:'Semua Kota',
+    allApplicants:'Semua Peserta', international:'Internasional', resident:'Residen',
     showing: (n,t) => n < t ? `Menampilkan ${n} dari ${t} program` : `${t} program`,
     gridView:'Grid', tableView:'Tabel', pageAll:'Semua',
     viewOn:'Lihat Program di studyinsaudi.sa',
@@ -578,7 +586,8 @@ const T = {
     lastUpdated: d => `آخر تحديث: ${d}`,
     searchPlaceholder:'ابحث عن البرامج...',
     allDegrees:'كل الدرجات', allScholarships:'كل المنح',
-    allUniversities:'كل الجامعات', allLanguages:'كل اللغات',
+    allUniversities:'كل الجامعات', allLanguages:'كل اللغات', allCities:'كل المدن',
+    allApplicants:'كل الطلاب', international:'دولي', resident:'مقيم',
     showing: (n,t) => n < t ? `عرض ${n} من ${t} برنامجاً` : `${t} برنامجاً`,
     gridView:'شبكة', tableView:'جدول', pageAll:'الكل',
     viewOn:'عرض البرنامج في studyinsaudi.sa',
@@ -597,7 +606,8 @@ const T = {
   }
 };
 
-const DEGREES      = ['Master','Bachelor','PhD','Higher Diploma'];
+const DEGREES         = ['Master','Bachelor','PhD','Higher Diploma'];
+const APPLICANT_TYPES = ['International','Resident'];
 const SCHOLARSHIPS = ['Full Scholarship','Free','Partial Scholarship','Paid Study'];
 const LANGUAGES    = ['Arabic','English','Arabic | English'];
 const SCH_CLASS    = {'Full Scholarship':'badge-full','Free':'badge-free','Partial Scholarship':'badge-partial','Paid Study':'badge-paid'};
@@ -618,7 +628,7 @@ const state = (() => {
     viewMode: s.viewMode || 'grid',
     theme:    s.theme    || 'light',
     pageSize: s.pageSize || 100,
-    search: '', filterDeg:'all', filterSch:'all', filterUniv:'all', filterLang:'all',
+    search: '', filterDeg:'all', filterSch:'all', filterUniv:'all', filterLang:'all', filterApplicant:'all', filterCity:'all',
     programs: [], institutionsMap: new Map(),
     loading: true, selectedProg: null, lastUpdated: null,
   };
@@ -730,10 +740,12 @@ function filtered() {
       const ar = p.program_name_arabic || '';
       if (!en.includes(q) && !ar.includes(state.search.trim())) return false;
     }
-    if (state.filterDeg  !== 'all' && p.degree_level     !== state.filterDeg)  return false;
-    if (state.filterSch  !== 'all' && p.scholarship_type !== state.filterSch)  return false;
-    if (state.filterUniv !== 'all' && p.institution_name !== state.filterUniv) return false;
-    if (state.filterLang !== 'all' && p.language         !== state.filterLang) return false;
+    if (state.filterDeg       !== 'all' && p.degree_level     !== state.filterDeg)       return false;
+    if (state.filterSch       !== 'all' && p.scholarship_type !== state.filterSch)       return false;
+    if (state.filterApplicant !== 'all' && p.applicant_type   !== state.filterApplicant) return false;
+    if (state.filterLang      !== 'all' && p.language         !== state.filterLang)      return false;
+    if (state.filterCity      !== 'all' && p.city             !== state.filterCity)      return false;
+    if (state.filterUniv      !== 'all' && p.institution_name !== state.filterUniv)      return false;
     return true;
   });
 }
@@ -742,8 +754,35 @@ function paged(list) {
   return state.pageSize === 'all' ? list : list.slice(0, Number(state.pageSize));
 }
 
-function uniqueUnivs() {
-  return [...new Set(state.programs.map(p => p.institution_name).filter(Boolean))].sort();
+/* Helper: filter semua program kecuali dua dimensi terbawah (city & univ),
+   agar dropdown city & university hanya menampilkan opsi yang masih relevan. */
+function filteredUpstream() {
+  const q = state.search.trim().toLowerCase();
+  return state.programs.filter(p => {
+    if (q) {
+      const en = (p.program_name_english || '').toLowerCase();
+      const ar = p.program_name_arabic || '';
+      if (!en.includes(q) && !ar.includes(state.search.trim())) return false;
+    }
+    if (state.filterDeg       !== 'all' && p.degree_level     !== state.filterDeg)       return false;
+    if (state.filterSch       !== 'all' && p.scholarship_type !== state.filterSch)       return false;
+    if (state.filterApplicant !== 'all' && p.applicant_type   !== state.filterApplicant) return false;
+    if (state.filterLang      !== 'all' && p.language         !== state.filterLang)      return false;
+    return true;
+  });
+}
+
+function optionCities() {
+  return [...new Set(filteredUpstream().map(p => p.city).filter(Boolean))].sort();
+}
+
+function optionUnivs() {
+  // Universitas tersaring juga oleh kota yang dipilih
+  return [...new Set(
+    filteredUpstream()
+      .filter(p => state.filterCity === 'all' || p.city === state.filterCity)
+      .map(p => p.institution_name).filter(Boolean)
+  )].sort();
 }
 
 function computeStats() {
@@ -797,10 +836,13 @@ function renderDropdowns() {
     document.getElementById(id).innerHTML =
       opts.map(o => `<option value="${esc(o.v)}"${o.v===val?' selected':''}>${esc(o.l)}</option>`).join('');
   };
-  mk('filter-degree',      [{v:'all',l:t.allDegrees},      ...DEGREES.map(d=>({v:d,l:d}))],      state.filterDeg);
-  mk('filter-scholarship', [{v:'all',l:t.allScholarships},  ...SCHOLARSHIPS.map(s=>({v:s,l:s}))], state.filterSch);
-  mk('filter-university',  [{v:'all',l:t.allUniversities},  ...uniqueUnivs().map(u=>({v:u,l:u}))],state.filterUniv);
-  mk('filter-language',    [{v:'all',l:t.allLanguages},     ...LANGUAGES.map(l=>({v:l,l:l}))],    state.filterLang);
+  mk('filter-scholarship', [{v:'all',l:t.allScholarships},  ...SCHOLARSHIPS.map(s=>({v:s,l:s}))],               state.filterSch);
+  mk('filter-degree',      [{v:'all',l:t.allDegrees},      ...DEGREES.map(d=>({v:d,l:d}))],                      state.filterDeg);
+  mk('filter-applicant',   [{v:'all',l:t.allApplicants},
+                             {v:'International',l:t.international},{v:'Resident',l:t.resident}],                  state.filterApplicant);
+  mk('filter-language',    [{v:'all',l:t.allLanguages},     ...LANGUAGES.map(l=>({v:l,l:l}))],                   state.filterLang);
+  mk('filter-city',        [{v:'all',l:t.allCities},        ...optionCities().map(c=>({v:c,l:c}))],              state.filterCity);
+  mk('filter-university',  [{v:'all',l:t.allUniversities},  ...optionUnivs().map(u=>({v:u,l:u}))],              state.filterUniv);
   document.getElementById('page-size').value = String(state.pageSize);
 }
 
@@ -869,6 +911,7 @@ function cardHTML(p) {
       <div class="card-badges">
         <span class="badge badge-degree">${esc(p.degree_level||'')}</span>
         <span class="badge ${sc}">${esc(p.scholarship_type||'')}</span>
+        ${p.applicant_type ? `<span class="badge ${p.applicant_type==='International'?'badge-intl':'badge-res'}">${esc(p.applicant_type)}</span>` : ''}
       </div>
       <div>
         <div class="card-title">${esc(p.program_name_english||'')}</div>
@@ -972,6 +1015,7 @@ function renderPanel() {
           <div class="info-cell"><div class="info-cell-label">${esc(t.tuition)}</div><div class="info-cell-value" style="${tuitionStyle}">${tuitionVal}</div></div>
           <div class="info-cell"><div class="info-cell-label">${esc(t.gender)}</div><div class="info-cell-value">${esc(p.gender||'—')}</div></div>
           <div class="info-cell"><div class="info-cell-label">${esc(t.city)}</div><div class="info-cell-value">${esc(p.city||'—')}</div></div>
+          ${p.applicant_type ? `<div class="info-cell"><div class="info-cell-label">${esc(t.allApplicants.replace(/^(All|Semua|كل)\s/,''))}</div><div class="info-cell-value"><span class="badge ${p.applicant_type==='International'?'badge-intl':'badge-res'}" style="font-size:12px">${esc(p.applicant_type)}</span></div></div>` : ''}
         </div>
       </div>
 
@@ -1057,6 +1101,10 @@ document.getElementById('view-toggle').addEventListener('click', e => {
 
 document.getElementById('search-input').addEventListener('input', debounce(e => {
   state.search = e.target.value;
+  // Reset city/univ jika tidak lagi valid setelah search
+  if (state.filterCity !== 'all' && !optionCities().includes(state.filterCity)) state.filterCity = 'all';
+  if (state.filterUniv !== 'all' && !optionUnivs().includes(state.filterUniv))  state.filterUniv = 'all';
+  renderDropdowns();
   renderResults();
 }, 300));
 
@@ -1065,10 +1113,29 @@ document.getElementById('page-size').addEventListener('change', e => {
   persist(); renderResults();
 });
 
-['filter-degree','filter-scholarship','filter-university','filter-language'].forEach(id => {
+['filter-scholarship','filter-degree','filter-applicant','filter-language','filter-city','filter-university'].forEach(id => {
   document.getElementById(id).addEventListener('change', e => {
-    const map = {'filter-degree':'filterDeg','filter-scholarship':'filterSch','filter-university':'filterUniv','filter-language':'filterLang'};
+    const map = {
+      'filter-scholarship':'filterSch',  'filter-degree':'filterDeg',
+      'filter-applicant':'filterApplicant', 'filter-language':'filterLang',
+      'filter-city':'filterCity', 'filter-university':'filterUniv',
+    };
     state[map[id]] = e.target.value;
+
+    // Cascade: jika filter upstream berubah, reset pilihan downstream jika tidak lagi valid
+    const upstreamFilters = ['filter-scholarship','filter-degree','filter-applicant','filter-language','filter-city'];
+    if (upstreamFilters.includes(id)) {
+      // Cek apakah kota yang dipilih masih tersedia
+      if (id !== 'filter-city' && state.filterCity !== 'all') {
+        if (!optionCities().includes(state.filterCity)) state.filterCity = 'all';
+      }
+      // Cek apakah universitas yang dipilih masih tersedia setelah kota/filter lain berubah
+      if (state.filterUniv !== 'all' && !optionUnivs().includes(state.filterUniv)) {
+        state.filterUniv = 'all';
+      }
+      renderDropdowns(); // refresh opsi dropdown
+    }
+
     renderResults();
   });
 });
