@@ -606,18 +606,32 @@ const T = {
   }
 };
 
-const DEGREES         = ['Master','Bachelor','PhD','Higher Diploma'];
-const APPLICANT_TYPES = ['International','Resident'];
-const SCHOLARSHIPS = ['Full Scholarship','Free','Partial Scholarship','Paid Study'];
-const LANGUAGES    = ['Arabic','English','Arabic | English'];
-const SCH_CLASS    = {'Full Scholarship':'badge-full','Free':'badge-free','Partial Scholarship':'badge-partial','Paid Study':'badge-paid'};
-const DEG_ABBR     = {'Master':'MSc','Bachelor':'B.Sc','PhD':'PhD','Higher Diploma':'Dip.'};
+/* Badge & display maps — tetap statis karena ini visual, bukan filter */
+const SCH_CLASS = {
+  'Full Scholarship':'badge-full', 'Free':'badge-free',
+  'Partial Scholarship':'badge-partial', 'Paid Study':'badge-paid',
+};
+const DEG_ABBR = {'Master':'MSc','Bachelor':'B.Sc','PhD':'PhD','Higher Diploma':'Dip.'};
 const SCH_BAR_COLOR = {
   'Full Scholarship':'rgba(34,197,94,0.35)',
   'Free':'rgba(100,116,139,0.3)',
   'Partial Scholarship':'rgba(245,158,11,0.35)',
-  'Paid Study': null,
 };
+
+/* Ambil nilai unik dari data yang sudah dimuat, dengan urutan preferensi jika dikenal */
+const DEG_ORDER = ['Bachelor','Master','PhD','Higher Diploma'];
+const SCH_ORDER = ['Full Scholarship','Partial Scholarship','Free','Paid Study'];
+
+function uniqueVals(key, preferredOrder) {
+  const vals = [...new Set(state.programs.map(p => p[key]).filter(Boolean))];
+  if (preferredOrder) {
+    return [
+      ...preferredOrder.filter(v => vals.includes(v)),
+      ...vals.filter(v => !preferredOrder.includes(v)).sort(),
+    ];
+  }
+  return vals.sort();
+}
 
 /* ── STATE ── */
 const state = (() => {
@@ -790,8 +804,8 @@ function computeStats() {
   const univs  = new Set(d.map(p => p.institution_id || p.institution_name)).size;
   const cities = new Set(d.map(p => p.city).filter(Boolean)).size;
   const pctSch = tot ? Math.round(d.filter(p => p.scholarship_type && p.scholarship_type !== 'Paid Study').length / tot * 100) : 0;
-  const byDeg  = DEGREES.map(v => ({label:v, n: d.filter(p => p.degree_level===v).length}));
-  const bySch  = SCHOLARSHIPS.map(v => ({label:v, n: d.filter(p => p.scholarship_type===v).length, color: SCH_BAR_COLOR[v]}));
+  const byDeg  = uniqueVals('degree_level',    DEG_ORDER).map(v => ({label:v, n: d.filter(p => p.degree_level===v).length}));
+  const bySch  = uniqueVals('scholarship_type', SCH_ORDER).map(v => ({label:v, n: d.filter(p => p.scholarship_type===v).length, color: SCH_BAR_COLOR[v]||null}));
   const um = new Map();
   d.forEach(p => { const k = p.institution_name || '—'; um.set(k, (um.get(k)||0)+1); });
   const topU = [...um.entries()]
@@ -836,13 +850,13 @@ function renderDropdowns() {
     document.getElementById(id).innerHTML =
       opts.map(o => `<option value="${esc(o.v)}"${o.v===val?' selected':''}>${esc(o.l)}</option>`).join('');
   };
-  mk('filter-scholarship', [{v:'all',l:t.allScholarships},  ...SCHOLARSHIPS.map(s=>({v:s,l:s}))],               state.filterSch);
-  mk('filter-degree',      [{v:'all',l:t.allDegrees},      ...DEGREES.map(d=>({v:d,l:d}))],                      state.filterDeg);
-  mk('filter-applicant',   [{v:'all',l:t.allApplicants},
-                             {v:'International',l:t.international},{v:'Resident',l:t.resident}],                  state.filterApplicant);
-  mk('filter-language',    [{v:'all',l:t.allLanguages},     ...LANGUAGES.map(l=>({v:l,l:l}))],                   state.filterLang);
-  mk('filter-city',        [{v:'all',l:t.allCities},        ...optionCities().map(c=>({v:c,l:c}))],              state.filterCity);
-  mk('filter-university',  [{v:'all',l:t.allUniversities},  ...optionUnivs().map(u=>({v:u,l:u}))],              state.filterUniv);
+  const toOpts = arr => arr.map(v => ({v, l:v}));
+  mk('filter-scholarship', [{v:'all',l:t.allScholarships}, ...toOpts(uniqueVals('scholarship_type', SCH_ORDER))], state.filterSch);
+  mk('filter-degree',      [{v:'all',l:t.allDegrees},      ...toOpts(uniqueVals('degree_level',    DEG_ORDER))], state.filterDeg);
+  mk('filter-applicant',   [{v:'all',l:t.allApplicants},   ...toOpts(uniqueVals('applicant_type'))],             state.filterApplicant);
+  mk('filter-language',    [{v:'all',l:t.allLanguages},    ...toOpts(uniqueVals('language'))],                   state.filterLang);
+  mk('filter-city',        [{v:'all',l:t.allCities},       ...optionCities().map(c=>({v:c,l:c}))],              state.filterCity);
+  mk('filter-university',  [{v:'all',l:t.allUniversities}, ...optionUnivs().map(u=>({v:u,l:u}))],               state.filterUniv);
   document.getElementById('page-size').value = String(state.pageSize);
 }
 
