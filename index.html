@@ -274,6 +274,42 @@ body[dir="rtl"] .filter-right { margin-left: 0; margin-right: auto; }
 .vtoggle button.active { background: var(--bd); color: var(--t1); }
 .vtoggle button:hover:not(.active) { background: var(--card-h); color: var(--t2); }
 
+/* Multi-select dropdown */
+.ms-wrap { position: relative; display: inline-flex; flex-shrink: 0; }
+.ms-btn {
+  height: 34px; padding: 0 26px 0 10px; cursor: pointer; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; text-align: left;
+  background: var(--card); border: 1px solid var(--bd); border-radius: 5px;
+  color: var(--t1); font-size: 13px; outline: none; transition: border-color 0.15s;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23777'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 9px center;
+  width: 100%;
+}
+body[dir="rtl"] .ms-btn { text-align: right; padding: 0 10px 0 26px; background-position: left 9px center; }
+.ms-btn:hover, .ms-wrap.open .ms-btn { border-color: var(--ba); }
+.ms-btn.has-selection { border-color: var(--ba); color: var(--ba); font-weight: 500; }
+.ms-panel {
+  display: none; position: absolute; top: calc(100% + 4px); left: 0; z-index: 300;
+  min-width: 100%; max-width: 300px;
+  background: var(--card); border: 1px solid var(--bd); border-radius: 8px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.18); padding: 4px 0;
+  max-height: 260px; overflow-y: auto;
+}
+body[dir="rtl"] .ms-panel { left: auto; right: 0; }
+.ms-wrap.open .ms-panel { display: block; }
+.ms-opt {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 12px; cursor: pointer; font-size: 13px; color: var(--t1);
+  transition: background 0.1s; user-select: none;
+}
+.ms-opt:hover { background: var(--card-h); }
+.ms-opt input[type=checkbox] { accent-color: var(--ba); cursor: pointer; flex-shrink: 0; width: 14px; height: 14px; }
+.ms-clear { display: flex; align-items: center; justify-content: flex-end;
+  padding: 4px 10px 6px; border-bottom: 1px solid var(--bd); margin-bottom: 2px; }
+.ms-clear button { font-size: 11px; color: var(--t4); background: none; border: none;
+  cursor: pointer; padding: 2px 4px; border-radius: 3px; }
+.ms-clear button:hover { color: var(--ba); background: var(--card-h); }
+
 /* Main */
 main { flex: 1; padding: 16px 24px 32px; }
 
@@ -446,13 +482,13 @@ body[dir="rtl"] .univ-name-ar { text-align: left; }
       </span>
       <input class="inp" type="text" id="search-input">
     </div>
-    <select class="inp" id="filter-scholarship" style="width:160px"></select>
-    <select class="inp" id="filter-degree"      style="width:130px"></select>
-    <select class="inp" id="filter-applicant"   style="width:155px"></select>
-    <select class="inp" id="filter-gender"      style="width:130px"></select>
-    <select class="inp" id="filter-language"    style="width:140px"></select>
-    <select class="inp" id="filter-city"        style="width:175px"></select>
-    <select class="inp" id="filter-university"  style="width:195px"></select>
+    <div class="ms-wrap" id="filter-scholarship" style="width:160px"><button class="ms-btn" id="filter-scholarship-btn" type="button"></button><div class="ms-panel" id="filter-scholarship-panel"></div></div>
+    <div class="ms-wrap" id="filter-degree"      style="width:130px"><button class="ms-btn" id="filter-degree-btn"      type="button"></button><div class="ms-panel" id="filter-degree-panel"></div></div>
+    <div class="ms-wrap" id="filter-applicant"   style="width:155px"><button class="ms-btn" id="filter-applicant-btn"   type="button"></button><div class="ms-panel" id="filter-applicant-panel"></div></div>
+    <div class="ms-wrap" id="filter-gender"      style="width:130px"><button class="ms-btn" id="filter-gender-btn"      type="button"></button><div class="ms-panel" id="filter-gender-panel"></div></div>
+    <div class="ms-wrap" id="filter-language"    style="width:140px"><button class="ms-btn" id="filter-language-btn"    type="button"></button><div class="ms-panel" id="filter-language-panel"></div></div>
+    <div class="ms-wrap" id="filter-city"        style="width:175px"><button class="ms-btn" id="filter-city-btn"        type="button"></button><div class="ms-panel" id="filter-city-panel"></div></div>
+    <div class="ms-wrap" id="filter-university"  style="width:195px"><button class="ms-btn" id="filter-university-btn"  type="button"></button><div class="ms-panel" id="filter-university-panel"></div></div>
     <div class="filter-right">
       <span class="showing-count" id="showing-count"></span>
       <select class="inp" id="page-size" style="width:80px">
@@ -650,7 +686,7 @@ const state = (() => {
     viewMode: s.viewMode || 'grid',
     theme:    s.theme    || 'light',
     pageSize: s.pageSize || 100,
-    search: '', filterDeg:'all', filterSch:'all', filterUniv:'all', filterLang:'all', filterApplicant:'all', filterGender:'all', filterCity:'all',
+    search: '', filterDeg:[], filterSch:[], filterUniv:[], filterLang:[], filterApplicant:[], filterGender:[], filterCity:[],
     programs: [], institutionsMap: new Map(),
     loading: true, selectedProg: null, lastUpdated: null,
   };
@@ -762,13 +798,13 @@ function filtered() {
       const ar = p.program_name_arabic || '';
       if (!en.includes(q) && !ar.includes(state.search.trim())) return false;
     }
-    if (state.filterDeg       !== 'all' && p.degree_level     !== state.filterDeg)       return false;
-    if (state.filterSch       !== 'all' && p.scholarship_type !== state.filterSch)       return false;
-    if (state.filterApplicant !== 'all' && p.applicant_type   !== state.filterApplicant) return false;
-    if (state.filterGender    !== 'all' && p.gender           !== state.filterGender)    return false;
-    if (state.filterLang      !== 'all' && p.language         !== state.filterLang)      return false;
-    if (state.filterCity      !== 'all' && p.city             !== state.filterCity)      return false;
-    if (state.filterUniv      !== 'all' && p.institution_name !== state.filterUniv)      return false;
+    if (state.filterDeg.length       > 0 && !state.filterDeg.includes(p.degree_level))        return false;
+    if (state.filterSch.length       > 0 && !state.filterSch.includes(p.scholarship_type))     return false;
+    if (state.filterApplicant.length > 0 && !state.filterApplicant.includes(p.applicant_type)) return false;
+    if (state.filterGender.length    > 0 && !state.filterGender.includes(p.gender))            return false;
+    if (state.filterLang.length      > 0 && !state.filterLang.includes(p.language))            return false;
+    if (state.filterCity.length      > 0 && !state.filterCity.includes(p.city))                return false;
+    if (state.filterUniv.length      > 0 && !state.filterUniv.includes(p.institution_name))    return false;
     return true;
   });
 }
@@ -787,11 +823,11 @@ function filteredUpstream() {
       const ar = p.program_name_arabic || '';
       if (!en.includes(q) && !ar.includes(state.search.trim())) return false;
     }
-    if (state.filterDeg       !== 'all' && p.degree_level     !== state.filterDeg)       return false;
-    if (state.filterSch       !== 'all' && p.scholarship_type !== state.filterSch)       return false;
-    if (state.filterApplicant !== 'all' && p.applicant_type   !== state.filterApplicant) return false;
-    if (state.filterGender    !== 'all' && p.gender           !== state.filterGender)    return false;
-    if (state.filterLang      !== 'all' && p.language         !== state.filterLang)      return false;
+    if (state.filterDeg.length       > 0 && !state.filterDeg.includes(p.degree_level))        return false;
+    if (state.filterSch.length       > 0 && !state.filterSch.includes(p.scholarship_type))     return false;
+    if (state.filterApplicant.length > 0 && !state.filterApplicant.includes(p.applicant_type)) return false;
+    if (state.filterGender.length    > 0 && !state.filterGender.includes(p.gender))            return false;
+    if (state.filterLang.length      > 0 && !state.filterLang.includes(p.language))            return false;
     return true;
   });
 }
@@ -804,7 +840,7 @@ function optionUnivs() {
   // Universitas tersaring juga oleh kota yang dipilih
   return [...new Set(
     filteredUpstream()
-      .filter(p => state.filterCity === 'all' || p.city === state.filterCity)
+      .filter(p => state.filterCity.length === 0 || state.filterCity.includes(p.city))
       .map(p => p.institution_name).filter(Boolean)
   )].sort();
 }
@@ -856,19 +892,58 @@ function renderStaticText() {
 /* ── RENDER: DROPDOWNS ── */
 function renderDropdowns() {
   const t = tr();
-  const mk = (id, opts, val) => {
-    document.getElementById(id).innerHTML =
-      opts.map(o => `<option value="${esc(o.v)}"${o.v===val?' selected':''}>${esc(o.l)}</option>`).join('');
+
+  /* Render satu multi-select:
+     - id        : id elemen ms-wrap (misal "filter-degree")
+     - allLabel  : teks tombol saat tidak ada pilihan (misal "All Degrees")
+     - opts      : array string nilai yang tersedia
+     - selected  : array nilai yang sedang dipilih (state) */
+  const mk = (id, allLabel, opts, selected) => {
+    const panel = document.getElementById(id + '-panel');
+    const btn   = document.getElementById(id + '-btn');
+    if (!panel || !btn) return;
+
+    // Clear button (hanya tampil kalau ada pilihan aktif)
+    const clearHtml = selected.length > 0
+      ? `<div class="ms-clear"><button onclick="clearFilter('${id}')" type="button">✕ clear</button></div>`
+      : '';
+
+    panel.innerHTML = clearHtml + opts.map(v =>
+      `<label class="ms-opt"><input type="checkbox" value="${esc(v)}"${selected.includes(v) ? ' checked' : ''}><span>${esc(v)}</span></label>`
+    ).join('');
+
+    // Label tombol
+    if (selected.length === 0) {
+      btn.textContent = allLabel;
+      btn.classList.remove('has-selection');
+    } else if (selected.length === 1) {
+      btn.textContent = selected[0];
+      btn.classList.add('has-selection');
+    } else {
+      btn.textContent = selected.length + ' selected';
+      btn.classList.add('has-selection');
+    }
   };
-  const toOpts = arr => arr.map(v => ({v, l:v}));
-  mk('filter-scholarship', [{v:'all',l:t.allScholarships}, ...toOpts(uniqueVals('scholarship_type', SCH_ORDER))], state.filterSch);
-  mk('filter-degree',      [{v:'all',l:t.allDegrees},      ...toOpts(uniqueVals('degree_level',    DEG_ORDER))], state.filterDeg);
-  mk('filter-applicant',   [{v:'all',l:t.allApplicants},   ...toOpts(uniqueVals('applicant_type'))],             state.filterApplicant);
-  mk('filter-gender',      [{v:'all',l:t.allGenders},      ...toOpts(uniqueVals('gender', ['Male','Female','Both']))], state.filterGender);
-  mk('filter-language',    [{v:'all',l:t.allLanguages},    ...toOpts(uniqueVals('language'))],                   state.filterLang);
-  mk('filter-city',        [{v:'all',l:t.allCities},       ...optionCities().map(c=>({v:c,l:c}))],              state.filterCity);
-  mk('filter-university',  [{v:'all',l:t.allUniversities}, ...optionUnivs().map(u=>({v:u,l:u}))],               state.filterUniv);
+
+  mk('filter-scholarship', t.allScholarships, uniqueVals('scholarship_type', SCH_ORDER), state.filterSch);
+  mk('filter-degree',      t.allDegrees,      uniqueVals('degree_level',    DEG_ORDER),  state.filterDeg);
+  mk('filter-applicant',   t.allApplicants,   uniqueVals('applicant_type'),               state.filterApplicant);
+  mk('filter-gender',      t.allGenders,      uniqueVals('gender', ['Male','Female','Both']), state.filterGender);
+  mk('filter-language',    t.allLanguages,    uniqueVals('language'),                     state.filterLang);
+  mk('filter-city',        t.allCities,       optionCities(),                             state.filterCity);
+  mk('filter-university',  t.allUniversities, optionUnivs(),                              state.filterUniv);
   document.getElementById('page-size').value = String(state.pageSize);
+}
+
+/* Hapus semua pilihan satu filter (dipanggil oleh clear button) */
+function clearFilter(id) {
+  const map = {
+    'filter-scholarship':'filterSch', 'filter-degree':'filterDeg',
+    'filter-applicant':'filterApplicant', 'filter-gender':'filterGender',
+    'filter-language':'filterLang', 'filter-city':'filterCity', 'filter-university':'filterUniv',
+  };
+  const key = map[id];
+  if (key) { state[key] = []; cascadeDropdowns(id); renderDropdowns(); renderResults(); }
 }
 
 /* ── RENDER: STATS ── */
@@ -1126,9 +1201,9 @@ document.getElementById('view-toggle').addEventListener('click', e => {
 
 document.getElementById('search-input').addEventListener('input', debounce(e => {
   state.search = e.target.value;
-  // Reset city/univ jika tidak lagi valid setelah search
-  if (state.filterCity !== 'all' && !optionCities().includes(state.filterCity)) state.filterCity = 'all';
-  if (state.filterUniv !== 'all' && !optionUnivs().includes(state.filterUniv))  state.filterUniv = 'all';
+  // Cascade: hapus kota/univ yang tidak lagi tersedia
+  state.filterCity = state.filterCity.filter(c => optionCities().includes(c));
+  state.filterUniv = state.filterUniv.filter(u => optionUnivs().includes(u));
   renderDropdowns();
   renderResults();
 }, 300));
@@ -1138,33 +1213,66 @@ document.getElementById('page-size').addEventListener('change', e => {
   persist(); renderResults();
 });
 
-['filter-scholarship','filter-degree','filter-applicant','filter-gender','filter-language','filter-city','filter-university'].forEach(id => {
-  document.getElementById(id).addEventListener('change', e => {
-    const map = {
-      'filter-scholarship':'filterSch',  'filter-degree':'filterDeg',
-      'filter-applicant':'filterApplicant', 'filter-gender':'filterGender',
-      'filter-language':'filterLang', 'filter-city':'filterCity',
-      'filter-university':'filterUniv',
-    };
-    state[map[id]] = e.target.value;
+/* Helper cascade: setelah filter upstream berubah, hapus pilihan downstream yg tidak lagi valid */
+function cascadeDropdowns(changedId) {
+  const upstreams = ['filter-scholarship','filter-degree','filter-applicant','filter-gender','filter-language','filter-city'];
+  if (!upstreams.includes(changedId)) return;
+  if (changedId !== 'filter-city') {
+    state.filterCity = state.filterCity.filter(c => optionCities().includes(c));
+  }
+  state.filterUniv = state.filterUniv.filter(u => optionUnivs().includes(u));
+}
 
-    // Cascade: jika filter upstream berubah, reset pilihan downstream jika tidak lagi valid
-    const upstreamFilters = ['filter-scholarship','filter-degree','filter-applicant','filter-gender','filter-language','filter-city'];
-    if (upstreamFilters.includes(id)) {
-      // Cek apakah kota yang dipilih masih tersedia
-      if (id !== 'filter-city' && state.filterCity !== 'all') {
-        if (!optionCities().includes(state.filterCity)) state.filterCity = 'all';
-      }
-      // Cek apakah universitas yang dipilih masih tersedia setelah kota/filter lain berubah
-      if (state.filterUniv !== 'all' && !optionUnivs().includes(state.filterUniv)) {
-        state.filterUniv = 'all';
-      }
-      renderDropdowns(); // refresh opsi dropdown
+/* Multi-select: buka/tutup panel + tangani checkbox */
+function initMultiSelects() {
+  const FILTER_MAP = {
+    'filter-scholarship':'filterSch', 'filter-degree':'filterDeg',
+    'filter-applicant':'filterApplicant', 'filter-gender':'filterGender',
+    'filter-language':'filterLang', 'filter-city':'filterCity', 'filter-university':'filterUniv',
+  };
+
+  // Toggle panel saat tombol diklik
+  document.querySelectorAll('.ms-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const wrap = btn.closest('.ms-wrap');
+      const isOpen = wrap.classList.contains('open');
+      document.querySelectorAll('.ms-wrap.open').forEach(w => w.classList.remove('open'));
+      if (!isOpen) wrap.classList.add('open');
+    });
+  });
+
+  // Tutup saat klik di luar
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.ms-wrap.open').forEach(w => w.classList.remove('open'));
+  });
+
+  // Tangani perubahan checkbox (event delegation)
+  document.addEventListener('change', e => {
+    const cb = e.target;
+    if (cb.type !== 'checkbox') return;
+    const panel = cb.closest('.ms-panel');
+    if (!panel) return;
+    const wrap  = panel.closest('.ms-wrap');
+    if (!wrap) return;
+
+    const id  = wrap.id;
+    const key = FILTER_MAP[id];
+    if (!key) return;
+
+    const val = cb.value;
+    if (cb.checked) {
+      if (!state[key].includes(val)) state[key] = [...state[key], val];
+    } else {
+      state[key] = state[key].filter(v => v !== val);
     }
 
+    cascadeDropdowns(id);
+    renderDropdowns();
     renderResults();
   });
-});
+}
+initMultiSelects();
 
 document.getElementById('backdrop').addEventListener('click', closePanel);
 window.addEventListener('keydown', e => { if (e.key === 'Escape' && state.selectedProg) closePanel(); });
